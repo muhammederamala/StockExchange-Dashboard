@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import io from "socket.io-client";
-import { Cpu, Database, Activity } from "lucide-react";
+import { Cpu, Database, Activity, TrendingUp, FastForward } from "lucide-react";
 
 import { Home } from "./pages/Home";
 import { Stocks } from "./pages/Stocks";
+import { Alerts } from "./pages/Alerts";
+import { Simulation } from "./pages/Simulation";
 import { StockDetail } from "./pages/StockDetail";
 import { Login } from "./pages/Login";
 
@@ -37,10 +39,10 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
           {/* Navigation Tabs */}
-          <nav className="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 backdrop-blur-md">
+          <nav className="flex items-center gap-1 bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 backdrop-blur-md">
             <Link
               to="/"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/'
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname === '/'
                 ? 'bg-zinc-800 text-white shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                 }`}
@@ -49,12 +51,30 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
             </Link>
             <Link
               to="/stocks"
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/stocks')
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/stocks')
                 ? 'bg-zinc-800 text-white shadow-sm'
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                 }`}
             >
               <Database size={16} /> Database
+            </Link>
+            <Link
+              to="/alerts"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/alerts')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                }`}
+            >
+              <TrendingUp size={16} /> Performance
+            </Link>
+            <Link
+              to="/simulation"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${location.pathname.startsWith('/simulation')
+                ? 'bg-zinc-800 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                }`}
+            >
+              <FastForward size={16} /> Simulation
             </Link>
           </nav>
 
@@ -137,6 +157,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home socket={socket} isConnected={isConnected} />} />
           <Route path="/stocks" element={<Stocks />} />
+          <Route path="/alerts" element={<Alerts />} />
+          <Route path="/simulation" element={<Simulation />} />
           <Route path="/stocks/:symbol" element={<StockDetail />} />
         </Routes>
       </Layout>

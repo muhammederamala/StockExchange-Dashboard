@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 export function StockDetail() {
     const { symbol } = useParams();
@@ -50,14 +50,37 @@ export function StockDetail() {
     };
 
     const currentScore = data.scores && data.scores.length > 0
-        ? data.scores[0].dailyScore
+        ? data.scores[data.scores.length - 1].dailyScore
         : 0;
 
     const cScore = data.cumulativeScore !== null ? data.cumulativeScore : 0;
+    const market = data.market || null;
+
+    const formatVolume = (vol) => {
+        if (!vol || vol === 0) return "—";
+        if (vol >= 10000000) return (vol / 10000000).toFixed(2) + " Cr";
+        if (vol >= 100000) return (vol / 100000).toFixed(2) + " L";
+        if (vol >= 1000) return (vol / 1000).toFixed(1) + " K";
+        return vol.toString();
+    };
+
+    const formatPrice = (price) => {
+        if (!price) return "—";
+        return "₹" + price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const dayChange = market && market.open && market.close
+        ? ((market.close - market.open) / market.open * 100)
+        : null;
 
     return (
         <div className="flex flex-col flex-1 w-full gap-6 overflow-y-auto pr-2 custom-scrollbar pb-12">
 
+            {/* Back Link */}
+            <Link to="/stocks" className="flex items-center gap-2 text-zinc-500 hover:text-indigo-400 transition-colors text-sm w-fit">
+                <ArrowLeft size={14} />
+                Back to Database
+            </Link>
 
             {/* Header Panel */}
             <div className="bg-zinc-900/40 p-6 rounded-2xl border border-zinc-800/50 backdrop-blur-md flex flex-col md:flex-row md:items-end justify-between gap-6 shadow-2xl relative overflow-hidden shrink-0">
@@ -69,28 +92,135 @@ export function StockDetail() {
                         <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded font-mono text-xs border border-zinc-700 tracking-widest shadow-inner">
                             TICKER: {data.symbol}
                         </span>
+                        {market && market.volume >= 500000 && (
+                            <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/20 rounded flex items-center gap-1">
+                                <Volume2 size={10} />
+                                High Volume
+                            </span>
+                        )}
                     </div>
                     <h2 className="text-4xl font-extrabold pb-1 bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-200 to-zinc-600 tracking-tight">
                         {data.companyName}
                     </h2>
                 </div>
 
-                <div className="flex gap-4 relative z-10">
-                    <div className="bg-black/40 border border-zinc-800 px-5 py-3 rounded-xl flex flex-col items-center min-w-[120px]">
-                        <span className="text-xs text-zinc-500 font-semibold mb-1 uppercase tracking-wider">Daily Score</span>
+                <div className="flex gap-3 flex-wrap relative z-10">
+                    <div className="bg-black/40 border border-zinc-800 px-5 py-3 rounded-xl flex flex-col items-center min-w-[110px]">
+                        <span className="text-[10px] text-zinc-500 font-semibold mb-1 uppercase tracking-wider">Daily Score</span>
                         <span className={`text-xl font-bold font-mono px-3 py-1 border rounded-lg shadow-sm ${getScoreColor(currentScore)}`}>
                             {currentScore > 0 ? '+' : ''}{currentScore.toFixed(2)}
                         </span>
                     </div>
-                    <div className="bg-black/40 border border-zinc-800 px-5 py-3 rounded-xl flex flex-col items-center min-w-[120px]">
-                        <span className="text-xs text-zinc-500 font-semibold mb-1 uppercase tracking-wider">Cumulative</span>
+                    <div className="bg-black/40 border border-zinc-800 px-5 py-3 rounded-xl flex flex-col items-center min-w-[110px]">
+                        <span className="text-[10px] text-zinc-500 font-semibold mb-1 uppercase tracking-wider">Cumulative</span>
                         <span className={`text-xl font-bold flex items-center gap-2 font-mono px-3 py-1 border rounded-lg shadow-sm ${getScoreColor(cScore)}`}>
                             {cScore > 0 ? <TrendingUp size={18} /> : cScore < 0 ? <TrendingDown size={18} /> : null}
                             {cScore > 0 ? '+' : ''}{cScore.toFixed(2)}
                         </span>
                     </div>
+                    {market && market.close && (
+                        <div className="bg-black/40 border border-zinc-800 px-5 py-3 rounded-xl flex flex-col items-center min-w-[110px]">
+                            <span className="text-[10px] text-zinc-500 font-semibold mb-1 uppercase tracking-wider">LTP</span>
+                            <span className="text-xl font-bold font-mono text-zinc-100">
+                                {formatPrice(market.close)}
+                            </span>
+                            {dayChange !== null && (
+                                <span className={`text-[10px] font-mono flex items-center gap-0.5 mt-0.5 ${dayChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                    {dayChange >= 0 ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+                                    {dayChange >= 0 ? '+' : ''}{dayChange.toFixed(2)}%
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Market Data Panel */}
+            {market && (market.open || market.volume > 0) && (
+                <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800/50 backdrop-blur-md shrink-0">
+                    <h3 className="text-sm font-semibold text-zinc-400 mb-4 border-b border-zinc-800/80 pb-3 flex items-center gap-2">
+                        <BarChart3 size={16} className="text-indigo-400" />
+                        TODAY'S MARKET DATA
+                        {market.candleCount > 0 && (
+                            <span className="text-[10px] font-mono text-zinc-600 ml-auto">
+                                {market.candleCount} candles tracked
+                            </span>
+                        )}
+                    </h3>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {/* Open */}
+                        <div className="bg-black/30 rounded-xl p-3.5 border border-zinc-800/50">
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-1">Open</span>
+                            <span className="text-lg font-bold font-mono text-zinc-200">{formatPrice(market.open)}</span>
+                        </div>
+
+                        {/* High */}
+                        <div className="bg-black/30 rounded-xl p-3.5 border border-emerald-500/10">
+                            <span className="text-[10px] text-emerald-400/60 uppercase tracking-wider font-semibold block mb-1">Day High</span>
+                            <span className="text-lg font-bold font-mono text-emerald-400">{formatPrice(market.high)}</span>
+                        </div>
+
+                        {/* Low */}
+                        <div className="bg-black/30 rounded-xl p-3.5 border border-red-500/10">
+                            <span className="text-[10px] text-red-400/60 uppercase tracking-wider font-semibold block mb-1">Day Low</span>
+                            <span className="text-lg font-bold font-mono text-red-400">{formatPrice(market.low)}</span>
+                        </div>
+
+                        {/* Close / LTP */}
+                        <div className="bg-black/30 rounded-xl p-3.5 border border-zinc-800/50">
+                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold block mb-1">Last Price</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-lg font-bold font-mono text-zinc-200">{formatPrice(market.close)}</span>
+                                {dayChange !== null && (
+                                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded border ${dayChange >= 0
+                                        ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                                        : 'text-red-400 bg-red-500/10 border-red-500/20'
+                                        }`}>
+                                        {dayChange >= 0 ? '+' : ''}{dayChange.toFixed(2)}%
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Volume */}
+                        <div className="bg-black/30 rounded-xl p-3.5 border border-indigo-500/10">
+                            <span className="text-[10px] text-indigo-400/60 uppercase tracking-wider font-semibold block mb-1">Volume</span>
+                            <span className={`text-lg font-bold font-mono ${market.volume >= 500000 ? 'text-indigo-400' : 'text-zinc-400'}`}>
+                                {formatVolume(market.volume)}
+                            </span>
+                            {market.volume >= 500000 && (
+                                <span className="text-[10px] text-indigo-400/50 block mt-0.5">High Volume</span>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Day Range Bar */}
+                    {market.low && market.high && market.close && (
+                        <div className="mt-4 px-1">
+                            <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 mb-1.5">
+                                <span>Day Low: {formatPrice(market.low)}</span>
+                                <span>Day High: {formatPrice(market.high)}</span>
+                            </div>
+                            <div className="relative h-2 bg-zinc-800 rounded-full overflow-hidden">
+                                <div
+                                    className="absolute top-0 left-0 h-full bg-gradient-to-r from-red-500/70 via-amber-400/50 to-emerald-500/70 rounded-full transition-all duration-500"
+                                    style={{
+                                        width: `${Math.min(100, Math.max(3, ((market.close - market.low) / (market.high - market.low)) * 100))}%`
+                                    }}
+                                />
+                                {/* Current price marker */}
+                                <div
+                                    className="absolute top-1/2 -translate-y-1/2 w-1 h-4 bg-white rounded-full shadow-lg shadow-white/30 transition-all duration-500"
+                                    style={{
+                                        left: `${Math.min(99, Math.max(1, ((market.close - market.low) / (market.high - market.low)) * 100))}%`
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
                 {/* Left Column (Scores Chart) */}
@@ -238,5 +368,3 @@ export function StockDetail() {
         </div>
     );
 }
-
-
