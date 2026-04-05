@@ -293,7 +293,7 @@ export function Stocks() {
                                                 )}
                                             </td>
                                             <td className="px-4 md:px-5 py-3.5 text-right hidden md:table-cell">
-                                                <span className={`text-xs font-mono ${m.volume >= 500000 ? 'text-indigo-400' : 'text-zinc-500'}`}>
+                                                <span className={`text-xs font-mono ${((m.volume || 0) * (m.close || 0)) >= 50000000 ? 'text-indigo-400' : 'text-zinc-500'}`}>
                                                     {formatVolume(m.volume)}
                                                 </span>
                                             </td>

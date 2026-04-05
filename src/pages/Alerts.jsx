@@ -4,6 +4,27 @@ import { TrendingUp, TrendingDown, Clock, CheckCircle2, ArrowUpRight, BarChart3,
 export function Alerts() {
     const [alerts, setAlerts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [highValueOnly, setHighValueOnly] = useState(false);
+
+    // Default to current week's Mon-Fri
+    const getDefaultDates = () => {
+        const today = new Date();
+        const currentDay = today.getDay(); // 0 is Sunday
+        const diffToMon = currentDay === 0 ? 6 : currentDay - 1;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - diffToMon);
+        const friday = new Date(monday);
+        friday.setDate(monday.getDate() + 4);
+
+        return {
+            from: monday.toISOString().split('T')[0],
+            to: friday.toISOString().split('T')[0]
+        };
+    };
+
+    const defaults = getDefaultDates();
+    const [fromDate, setFromDate] = useState(defaults.from);
+    const [toDate, setToDate] = useState(defaults.to);
 
     useEffect(() => {
         let isMounted = true;
@@ -11,7 +32,7 @@ export function Alerts() {
             setLoading(true);
             try {
                 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-                const res = await fetch(`${baseUrl}/api/performance/top-alerts?limit=50`);
+                const res = await fetch(`${baseUrl}/api/performance/top-alerts?limit=50&highValue=${highValueOnly}&from=${fromDate}&to=${toDate}`);
                 const data = await res.json();
                 if (isMounted) {
                     setAlerts(data.data || []);
@@ -25,11 +46,19 @@ export function Alerts() {
 
         fetchTopAlerts();
         return () => { isMounted = false; };
-    }, []);
+    }, [highValueOnly, fromDate, toDate]);
 
     const formatPrice = (price) => {
         if (!price) return "—";
         return "₹" + price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const formatVolume = (vol) => {
+        if (!vol) return "0";
+        if (vol >= 10000000) return (vol / 10000000).toFixed(2) + " Cr";
+        if (vol >= 100000) return (vol / 100000).toFixed(2) + " L";
+        if (vol >= 1000) return (vol / 1000).toFixed(1) + " K";
+        return vol.toString();
     };
 
     const formatDate = (dateStr) => {
@@ -75,7 +104,7 @@ export function Alerts() {
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
             {/* Page Header */}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+            <div className="flex flex-col md:flex-row items-end justify-between mb-6 gap-4">
                 <div>
                     <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-100 to-zinc-500 tracking-tight flex items-center gap-3">
                         <TrendingUp size={24} className="text-emerald-400" />
@@ -84,6 +113,38 @@ export function Alerts() {
                     <p className="text-zinc-500 mt-1 text-sm">
                         Tracking the best historical alerts and their maximum profit potential.
                     </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 backdrop-blur-md px-3 shrink-0">
+                        <Calendar size={14} className="text-zinc-600" />
+                        <input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            onClick={(e) => e.target.showPicker()}
+                            className="bg-transparent border-none outline-none text-xs text-zinc-300 font-mono cursor-pointer"
+                        />
+                        <span className="text-zinc-700 text-xs">—</span>
+                        <input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            onClick={(e) => e.target.showPicker()}
+                            className="bg-transparent border-none outline-none text-xs text-zinc-300 font-mono cursor-pointer"
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => setHighValueOnly(!highValueOnly)}
+                        className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold border transition-all ${highValueOnly
+                            ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 shadow-[0_0_20px_rgba(99,102,241,0.2)]'
+                            : 'bg-zinc-900/50 border-zinc-700/50 text-zinc-500 hover:text-zinc-300 hover:border-zinc-600'
+                            }`}
+                    >
+                        <BarChart3 size={14} className={highValueOnly ? 'animate-pulse' : ''} />
+                        High Value (5 Cr+)
+                    </button>
                 </div>
             </div>
 
@@ -107,7 +168,9 @@ export function Alerts() {
                             <thead className="bg-zinc-900/80 sticky top-0 text-xs uppercase font-semibold text-zinc-500 tracking-wider z-10">
                                 <tr>
                                     <th className="px-5 py-4">Symbol & Strategy</th>
+                                    <th className="px-5 py-4 text-center">Score Snapshot</th>
                                     <th className="px-5 py-4">Sent / Entry</th>
+                                    <th className="px-5 py-4 text-right">Traded Value</th>
                                     <th className="px-5 py-4 text-right">Max Gain</th>
                                     <th className="px-5 py-4 text-right">Optimal Exit</th>
                                     <th className="px-5 py-4 text-right hidden lg:table-cell">Trajectory</th>
@@ -135,6 +198,12 @@ export function Alerts() {
                                                 </div>
                                             </div>
                                         </td>
+                                        <td className="px-5 py-4 text-center">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <span className="text-sm font-bold text-zinc-100">{alert.cumulativeScore?.toFixed(1)}</span>
+                                                <span className="text-[10px] text-zinc-500 uppercase tracking-tighter">Cumul. Score</span>
+                                            </div>
+                                        </td>
                                         <td className="px-5 py-4">
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-1.5 text-xs text-zinc-400">
@@ -148,6 +217,14 @@ export function Alerts() {
                                                         ({alert.entryTime?.t || "at-alert"})
                                                     </span>
                                                 </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-5 py-4 text-right">
+                                            <div className="flex flex-col items-end">
+                                                <span className={`text-sm font-bold font-mono ${((alert.volume || 0) * (alert.dayPrice || 0)) >= 50000000 ? 'text-indigo-400' : 'text-zinc-400'}`}>
+                                                    ₹{formatVolume((alert.volume || 0) * (alert.dayPrice || 0))}
+                                                </span>
+                                                <span className="text-[9px] text-zinc-600 uppercase font-black tracking-widest">Day Liquidity</span>
                                             </div>
                                         </td>
                                         <td className="px-5 py-4 text-right">

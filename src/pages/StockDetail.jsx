@@ -92,7 +92,7 @@ export function StockDetail() {
                         <span className="px-3 py-1 bg-zinc-800 text-zinc-300 rounded font-mono text-xs border border-zinc-700 tracking-widest shadow-inner">
                             TICKER: {data.symbol}
                         </span>
-                        {market && market.volume >= 500000 && (
+                        {market && ((market.volume || 0) * (market.close || 0)) >= 50000000 && (
                             <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-bold uppercase tracking-wider border border-indigo-500/20 rounded flex items-center gap-1">
                                 <Volume2 size={10} />
                                 High Volume
@@ -186,10 +186,10 @@ export function StockDetail() {
                         {/* Volume */}
                         <div className="bg-black/30 rounded-xl p-3.5 border border-indigo-500/10">
                             <span className="text-[10px] text-indigo-400/60 uppercase tracking-wider font-semibold block mb-1">Volume</span>
-                            <span className={`text-lg font-bold font-mono ${market.volume >= 500000 ? 'text-indigo-400' : 'text-zinc-400'}`}>
+                            <span className={`text-lg font-bold font-mono ${((market.volume || 0) * (market.close || 0)) >= 50000000 ? 'text-indigo-400' : 'text-zinc-400'}`}>
                                 {formatVolume(market.volume)}
                             </span>
-                            {market.volume >= 500000 && (
+                            {((market.volume || 0) * (market.close || 0)) >= 50000000 && (
                                 <span className="text-[10px] text-indigo-400/50 block mt-0.5">High Volume</span>
                             )}
                         </div>
