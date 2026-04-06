@@ -4,11 +4,12 @@ import { Filter, Pause, Play, Download, Trash2 } from "lucide-react";
 
 export function LiveMonitor({ socket, isConnected }) {
     const [logs, setLogs] = useState([]);
-    const [filter, setFilter] = useState("All"); // All, Filings, News, System
+    const [filter, setFilter] = useState("All"); // All, Filings, News, Market, System
     const [isPaused, setIsPaused] = useState(false);
     const logsEndRef = useRef(null);
+    const terminalRef = useRef(null);
 
-    // Track pause state in a ref so the event listener doesn't need to be recreated continuously
+    // Track pause state in a ref so listeners don't recreate unnecessarily
     const isPausedRef = useRef(isPaused);
     isPausedRef.current = isPaused;
 
@@ -17,10 +18,8 @@ export function LiveMonitor({ socket, isConnected }) {
 
         const handleLog = (data) => {
             if (isPausedRef.current) return;
-
             setLogs((prev) => {
                 const newLogs = [...prev, data];
-                // Keep max 1000 logs to prevent memory leaks
                 return newLogs.length > 1000 ? newLogs.slice(newLogs.length - 1000) : newLogs;
             });
         };
@@ -29,9 +28,7 @@ export function LiveMonitor({ socket, isConnected }) {
         return () => socket.off("log", handleLog);
     }, [socket]);
 
-    const terminalRef = useRef(null);
-
-    // Auto-scroll logic
+    // Auto-scroll logic 
     useEffect(() => {
         if (!isPaused && terminalRef.current) {
             const { scrollTop, scrollHeight, clientHeight } = terminalRef.current;
@@ -52,14 +49,11 @@ export function LiveMonitor({ socket, isConnected }) {
     const getLogColor = (category, level) => {
         if (level === "error") return "text-red-400";
         if (level === "warn") return "text-amber-400";
-
         switch (category) {
-            case "Filings":
-                return "text-cyan-400";
-            case "News":
-                return "text-purple-400";
-            default:
-                return "text-zinc-400";
+            case "Filings": return "text-cyan-400";
+            case "News": return "text-purple-400";
+            case "Market": return "text-indigo-400";
+            default: return "text-zinc-400";
         }
     };
 
@@ -70,35 +64,22 @@ export function LiveMonitor({ socket, isConnected }) {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
                     <div className="flex items-center justify-between sm:justify-start gap-4">
                         <div className="flex items-center gap-2">
-                            <div
-                                className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-red-500"
-                                    }`}
-                            />
+                            <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
                             <h2 className="font-semibold text-zinc-100 whitespace-nowrap">Live Telemetry</h2>
-                        </div>
-
-                        {/* Mobile Controls (Visible only on mobile inside the title row) */}
-                        <div className="flex sm:hidden items-center gap-2">
-                            <button onClick={() => setIsPaused(!isPaused)} className="p-1.5 rounded-lg bg-zinc-800/50 text-zinc-400">
-                                {isPaused ? <Play size={14} /> : <Pause size={14} />}
-                            </button>
-                            <button onClick={clearLogs} className="p-1.5 rounded-lg bg-zinc-800/50 text-zinc-400">
-                                <Trash2 size={14} />
-                            </button>
                         </div>
                     </div>
 
                     <div className="hidden sm:block h-4 w-px bg-zinc-700" />
 
-                    {/* Filters - Scrollable area for mobile */}
-                    <div className="flex items-center gap-2 bg-zinc-950 rounded-lg p-1 border border-zinc-800 overflow-x-auto no-scrollbar">
-                        {["All", "Filings", "News", "System"].map((cat) => (
+                    {/* Filters */}
+                    <div className="flex items-center gap-1 bg-zinc-950/80 rounded-lg p-1 border border-zinc-800 overflow-x-auto no-scrollbar">
+                        {["All", "Filings", "News", "Market", "System"].map((cat) => (
                             <button
                                 key={cat}
                                 onClick={() => setFilter(cat)}
-                                className={`px-3 py-1 rounded-md text-xs font-medium transition-all whitespace-nowrap ${filter === cat
-                                    ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/20"
-                                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 border border-transparent"
+                                className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase transition-all whitespace-nowrap ${filter === cat
+                                    ? "bg-zinc-100 text-black px-4"
+                                    : "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50"
                                     }`}
                             >
                                 {cat}
@@ -111,7 +92,7 @@ export function LiveMonitor({ socket, isConnected }) {
                 <div className="hidden sm:flex items-center gap-2">
                     <button
                         onClick={() => setIsPaused(!isPaused)}
-                        className="p-2 rounded-lg bg-zinc-800/50 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 transition-colors"
+                        className={`p-2 rounded-lg transition-colors ${isPaused ? "bg-indigo-500/20 text-indigo-400" : "bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200"}`}
                         title={isPaused ? "Resume scrolling" : "Pause scrolling"}
                     >
                         {isPaused ? <Play size={16} /> : <Pause size={16} />}
@@ -136,38 +117,26 @@ export function LiveMonitor({ socket, isConnected }) {
                     if (isScrolledUp && !isPaused) setIsPaused(true);
                 }}
             >
-                {logs.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-2">
-                        <Filter size={24} className="opacity-50" />
-                        <p>Waiting for incoming telemetry...</p>
-                    </div>
-                ) : filteredLogs.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-zinc-500">
-                        <p>No logs match the current filter.</p>
+                {filteredLogs.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-zinc-500 gap-2 opacity-50 py-20">
+                        <Filter size={24} />
+                        <p className="text-xs">Waiting for telemetry logs...</p>
                     </div>
                 ) : (
                     <div className="space-y-1">
                         {filteredLogs.map((log, index) => (
-                            <div
-                                key={index}
-                                className="flex items-start gap-4 py-1 hover:bg-zinc-800/30 px-2 rounded -mx-2 transition-colors break-words group"
-                            >
-                                <div className="flex items-center gap-3 opacity-50 flex-shrink-0">
-                                    <span className="text-zinc-500">
-                                        {format(new Date(log.timestamp), "HH:mm:ss")}
-                                    </span>
-                                    <span
-                                        className={`text-[10px] px-1.5 py-0.5 rounded border ${log.category === "Filings"
-                                            ? "border-cyan-500/30 text-cyan-400 bg-cyan-500/10"
-                                            : log.category === "News"
-                                                ? "border-purple-500/30 text-purple-400 bg-purple-500/10"
-                                                : "border-zinc-500/30 text-zinc-400 bg-zinc-500/10"
-                                            }`}
-                                    >
-                                        {log.category.toUpperCase()}
+                            <div key={index} className="flex items-start gap-3 py-0.5 hover:bg-zinc-800/30 px-2 rounded -mx-2 transition-colors break-words group">
+                                <div className="flex items-center gap-3 opacity-30 flex-shrink-0">
+                                    <span className="text-[10px] text-zinc-500">{format(new Date(log.timestamp), "HH:mm:ss")}</span>
+                                    <span className={`text-[9px] px-1.5 py-0.5 rounded border uppercase font-bold tracking-tight ${log.category === "Market" ? "border-indigo-500/30 text-indigo-400 bg-indigo-500/10" :
+                                            log.category === "Filings" ? "border-cyan-500/30 text-cyan-400 bg-cyan-500/10" :
+                                                log.category === "News" ? "border-purple-500/30 text-purple-400 bg-purple-500/10" :
+                                                    "border-zinc-700 text-zinc-500"
+                                        }`}>
+                                        {log.category}
                                     </span>
                                 </div>
-                                <div className={`flex-1 ${getLogColor(log.category, log.level)}`}>
+                                <div className={`flex-1 text-xs leading-relaxed ${getLogColor(log.category, log.level)}`}>
                                     {log.message}
                                 </div>
                             </div>
