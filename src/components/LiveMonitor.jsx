@@ -64,8 +64,7 @@ export function LiveMonitor({ socket, isConnected }) {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full">
                     <div className="flex items-center justify-between sm:justify-start gap-4">
                         <div className="flex items-center gap-2">
-                            <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
-                            <h2 className="font-semibold text-zinc-100 whitespace-nowrap">Live Telemetry</h2>
+                            <div className={`w-2.5 h-2.5 rounded-full ${isConnected ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" : "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"}`} />
                         </div>
                     </div>
 

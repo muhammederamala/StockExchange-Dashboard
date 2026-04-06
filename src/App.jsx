@@ -81,7 +81,7 @@ function Sidebar({ isOpen, setIsOpen }) {
               </div>
               <div className="flex flex-col">
                 <span className="text-xs font-medium text-zinc-200">Terminal Admin</span>
-                <span className="text-[10px] text-zinc-500">v2.4.0-prod</span>
+                <span className="text-[10px] text-zinc-500">v1.5.0-prod</span>
               </div>
             </div>
           </div>
@@ -93,6 +93,28 @@ function Sidebar({ isOpen, setIsOpen }) {
 
 function Layout({ children, socket, isConnected, url, setUrl }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  const PAGE_META = {
+    "/": { title: "Live Telemetry", desc: "Real-time AI analysis and market signals." },
+    "/stocks": { title: "Stock Database", desc: "Comprehensive market tracking spanning all active exchanges." },
+    "/alerts": { title: "Alpha Performance Hub", desc: "Tracking the best historical alerts and their maximum profit potential." },
+    "/simulation": { title: "Alpha Simulator", desc: "Rewind to any date and see how the top-scoring stocks of that day performed." }
+  };
+
+  const getPageMeta = (pathname) => {
+    if (pathname === "/") return PAGE_META["/"];
+    if (pathname.startsWith("/stocks/")) {
+      const symbol = pathname.split("/").pop();
+      return { title: `Stock Analysis: ${symbol}`, desc: "Deep-dive quantitative and sentiment data vectors." };
+    }
+    if (pathname.startsWith("/stocks")) return PAGE_META["/stocks"];
+    if (pathname.startsWith("/alerts")) return PAGE_META["/alerts"];
+    if (pathname.startsWith("/simulation")) return PAGE_META["/simulation"];
+    return { title: "Dashboard", desc: "Antigravity AI Command Center" };
+  };
+
+  const meta = getPageMeta(location.pathname);
 
   return (
     <div className="min-h-screen bg-black text-white flex selection:bg-indigo-500/30">
@@ -107,25 +129,27 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
       <div className="flex-1 flex flex-col md:ml-64 min-w-0 h-screen overflow-hidden">
         {/* Top Header */}
         <header className="h-16 border-b border-zinc-900/50 bg-black/40 backdrop-blur-xl flex items-center justify-between px-6 shrink-0 z-30">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 -ml-2 text-zinc-400 hover:text-white md:hidden"
-          >
-            <Menu size={20} />
-          </button>
-
-          <div className="flex-1 md:flex-none">
-            <h2 className="text-sm font-medium text-zinc-300 md:hidden ml-2">
-              {location.pathname === '/' ? 'Live Telemetry' : 
-               location.pathname.startsWith('/stocks') ? 'Database' : 
-               location.pathname.startsWith('/alerts') ? 'Performance' : 
-               location.pathname.startsWith('/simulation') ? 'Simulation' : 'Dashboard'}
-            </h2>
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 -ml-2 text-zinc-400 hover:text-white md:hidden"
+            >
+              <Menu size={20} />
+            </button>
+            
+            <div className="flex flex-col min-w-0">
+              <h2 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                {meta.title}
+              </h2>
+              <p className="text-[10px] text-zinc-500 truncate hidden sm:block">
+                {meta.desc}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
             {/* Server Connection Info */}
-            <div className="hidden sm:flex items-center gap-3 bg-zinc-900/50 p-1 rounded-lg border border-zinc-800 backdrop-blur-md px-3">
+            <div className="flex items-center gap-3 bg-zinc-900/50 p-1 rounded-lg border border-zinc-800 backdrop-blur-md px-3">
               <input
                 type="text"
                 value={url}
@@ -136,8 +160,10 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
               <div className="h-3 w-px bg-zinc-800" />
               <div className={`flex items-center gap-1.5`}>
                 <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
-                <span className={`text-[10px] font-bold font-mono tracking-tighter ${isConnected ? 'text-emerald-400' : 'text-red-400'}`}>
+                <span className={`text-[10px] font-bold font-mono tracking-tighter ${isConnected ? 'text-emerald-400' : 'text-red-400'} flex items-center gap-1.5`}>
                   {isConnected ? 'STABLE' : 'DROPPED'}
+                  <span className="text-zinc-600 opacity-50 font-black">·</span>
+                  <span className="text-zinc-500 font-black">V1.5.0</span>
                 </span>
               </div>
             </div>

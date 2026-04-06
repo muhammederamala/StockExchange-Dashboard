@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { DataTable } from "../components/DataTable";
 
 export function StockDetail() {
     const { symbol } = useParams();
@@ -9,6 +10,7 @@ export function StockDetail() {
     const [isScoresOpen, setIsScoresOpen] = useState(true);
     const [isFilingsOpen, setIsFilingsOpen] = useState(true);
     const [isNewsOpen, setIsNewsOpen] = useState(true);
+    const [alertSearch, setAlertSearch] = useState("");
 
     useEffect(() => {
         let isMounted = true;
@@ -67,6 +69,12 @@ export function StockDetail() {
     const formatPrice = (price) => {
         if (!price) return "—";
         return "₹" + price.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return "—";
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
     };
 
     const dayChange = market && market.open && market.close
@@ -221,6 +229,91 @@ export function StockDetail() {
                     )}
                 </div>
             )}
+
+            {/* Historical Alerts Section */}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 px-2">
+                    <TrendingUp size={16} className="text-emerald-400" />
+                    <h3 className="text-sm font-bold text-zinc-100 uppercase tracking-widest">Historical Alpha Alerts</h3>
+                    <span className="text-[10px] font-mono text-zinc-600 ml-auto uppercase tracking-widest">
+                        {data.alerts?.length || 0} signals processed
+                    </span>
+                </div>
+                
+                <div className="h-[400px]">
+                    <DataTable 
+                        columns={[
+                            {
+                                header: "Sent / Entry",
+                                render: (alert) => (
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
+                                            <Calendar size={12} className="text-zinc-600" />
+                                            {formatDate(alert.alertTime)}
+                                        </div>
+                                        <div className="text-[10px] text-zinc-500 font-mono mt-1 flex items-center gap-1">
+                                            <Clock size={10} /> {formatPrice(alert.entryPrice)} 
+                                            <span className="opacity-50">({alert.entryTime?.t || 'at-alert'})</span>
+                                        </div>
+                                    </div>
+                                )
+                            },
+                            {
+                                header: "Strategy",
+                                render: (alert) => (
+                                    <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded border border-indigo-500/20 font-bold uppercase tracking-tighter">
+                                        {alert.strategy}
+                                    </span>
+                                )
+                            },
+                            {
+                                header: "Max Gain",
+                                align: "right",
+                                render: (alert) => (
+                                    <div className="flex flex-col items-end">
+                                        <span className={`text-sm font-black font-mono flex items-center gap-1 ${alert.maxGain > 5 ? 'text-emerald-400' : alert.maxGain > 0 ? 'text-emerald-400/70' : 'text-zinc-500'}`}>
+                                            <ArrowUpRight size={14} />
+                                            +{(alert.maxGain || 0).toFixed(2)}%
+                                        </span>
+                                        <span className="text-[9px] text-zinc-600 uppercase font-bold tracking-tighter">Peak Outcome</span>
+                                    </div>
+                                )
+                            },
+                            {
+                                header: "Optimal Exit",
+                                align: "right",
+                                render: (alert) => alert.optimalExit ? (
+                                    <div className="flex flex-col items-end">
+                                        <div className="flex items-center gap-1.5 text-zinc-300 text-[10px] font-bold">
+                                            <CheckCircle2 size={12} className="text-emerald-500" />
+                                            {formatDate(alert.optimalExit.date)}
+                                        </div>
+                                        <div className="text-[11px] font-mono font-bold text-zinc-400 mt-0.5">
+                                            {formatPrice(alert.optimalExit.price)}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <span className="text-zinc-700 font-mono text-[10px]">IN-PROGRESS</span>
+                                )
+                            }
+                        ]}
+                        data={(data.alerts || []).filter(a => 
+                            alertSearch === "" || 
+                            a.strategy.toLowerCase().includes(alertSearch.toLowerCase()) ||
+                            formatDate(a.alertTime).toLowerCase().includes(alertSearch.toLowerCase())
+                        )}
+                        searchValue={alertSearch}
+                        onSearchChange={setAlertSearch}
+                        searchPlaceholder="Filter strategy or date..."
+                        emptyState={
+                            <div className="py-12 text-center flex flex-col items-center gap-3 opacity-40">
+                                <ShieldAlert size={32} className="text-zinc-600" />
+                                <p className="text-sm font-mono tracking-widest text-zinc-500 uppercase">No historical alpha alerts detected for this ticker</p>
+                            </div>
+                        }
+                    />
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
                 {/* Left Column (Scores Chart) */}
