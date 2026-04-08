@@ -112,6 +112,21 @@ export function StockDetail() {
                     <h2 className="text-4xl font-extrabold pb-1 bg-clip-text text-transparent bg-gradient-to-br from-white via-zinc-200 to-zinc-600 tracking-tight">
                         {data.companyName}
                     </h2>
+                    {data.activePosition && (
+                        <div className="flex items-center gap-2 mt-2">
+                            {data.activePosition.status === 'PENDING_SETUP' ? (
+                                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20 rounded flex items-center gap-1.5">
+                                    <Clock size={10} className="animate-pulse" />
+                                    PENDING SETUP: {data.activePosition.pendingReason?.replace(/_/g, ' ')}
+                                </span>
+                            ) : (
+                                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20 rounded flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                    ACTIVE POSITION
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex gap-3 flex-wrap relative z-10">

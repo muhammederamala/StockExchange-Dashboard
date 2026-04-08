@@ -163,30 +163,54 @@ export function Trades() {
         {
             header: "Status & Exit",
             align: "right",
-            render: (item) => item.status === 'CLOSED' ? (
-                <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1.5 text-rose-400 text-xs font-bold uppercase tracking-wider">
-                        <CheckCircle2 size={12} />
-                        EXITED
-                    </div>
-                    <div className="text-[10px] text-zinc-500 mt-1">
-                        {item.exitReason?.replace(/_/g, ' ') || 'Closed'}
-                    </div>
-                    <div className="text-[10px] text-zinc-600 font-mono mt-0.5">
-                        {formatDate(item.exitTime)}
-                    </div>
-                </div>
-            ) : (
-                <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        LIVE
-                    </div>
-                    <div className="text-[10px] text-zinc-500 mt-1 font-mono">
-                        Held: {item.tradingDaysHeld || 0} Days
-                    </div>
-                </div>
-            )
+            render: (item) => {
+                if (item.status === 'CLOSED') {
+                    return (
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1.5 text-rose-400 text-xs font-bold uppercase tracking-wider">
+                                <CheckCircle2 size={12} />
+                                EXITED
+                            </div>
+                            <div className="text-[10px] text-zinc-500 mt-1">
+                                {item.exitReason?.replace(/_/g, ' ') || 'Closed'}
+                            </div>
+                            <div className="text-[10px] text-zinc-600 font-mono mt-0.5">
+                                {formatDate(item.exitTime)}
+                            </div>
+                        </div>
+                    );
+                } else if (item.status === 'PENDING_SETUP') {
+                    return (
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1.5 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                                <Clock size={12} className="animate-pulse" />
+                                PENDING
+                            </div>
+                            <div className="text-[10px] text-zinc-500 mt-1 font-medium italic">
+                                {item.pendingReason?.replace(/_/g, ' ') || 'Awaiting Setup'}
+                            </div>
+                            <div className="text-[10px] text-zinc-600 font-mono mt-0.5">
+                                Ref: {formatPrice(item.entryPrice)}
+                            </div>
+                        </div>
+                    );
+                } else {
+                    return (
+                        <div className="flex flex-col items-end">
+                            <div className="flex items-center gap-1.5 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                LIVE
+                            </div>
+                            <div className="text-[10px] text-zinc-500 mt-1 font-mono">
+                                Held: {item.tradingDaysHeld || 0} Days
+                            </div>
+                            <div className="text-[10px] text-zinc-600 font-mono mt-0.5">
+                                In: {formatPrice(item.entryPrice)}
+                            </div>
+                        </div>
+                    );
+                }
+            }
         }
     ];
 
