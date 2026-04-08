@@ -3,6 +3,8 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
 import { DataTable } from "../components/DataTable";
 
+import { StockPriceChart } from "../components/StockPriceChart";
+
 export function StockDetail() {
     const { symbol } = useParams();
     const [data, setData] = useState(null);
@@ -457,6 +459,11 @@ export function StockDetail() {
                     </div>
 
                 </div>
+            </div>
+
+            {/* Price Chart Section - Full Row */}
+            <div className="w-full shrink-0">
+                <StockPriceChart symbol={symbol} />
             </div>
         </div>
     );

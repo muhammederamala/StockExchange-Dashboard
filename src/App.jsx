@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import io from "socket.io-client";
-import { Cpu, Database, Activity, TrendingUp, FastForward, Menu, X } from "lucide-react";
+import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, X } from "lucide-react";
 
 import { Home } from "./pages/Home";
 import { Stocks } from "./pages/Stocks";
 import { Alerts } from "./pages/Alerts";
 import { Simulation } from "./pages/Simulation";
+import { Trades } from "./pages/Trades";
 import { StockDetail } from "./pages/StockDetail";
 import { Login } from "./pages/Login";
 
@@ -21,6 +22,7 @@ function NavLinks({ closeSidebar }) {
     { to: "/stocks", label: "Database", icon: Database },
     { to: "/alerts", label: "Performance", icon: TrendingUp },
     { to: "/simulation", label: "Simulation", icon: FastForward },
+    { to: "/trades", label: "Trades", icon: Briefcase },
   ];
 
   return (
@@ -99,7 +101,8 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
     "/": { title: "Live Telemetry", desc: "Real-time AI analysis and market signals." },
     "/stocks": { title: "Stock Database", desc: "Comprehensive market tracking spanning all active exchanges." },
     "/alerts": { title: "Alpha Performance Hub", desc: "Tracking the best historical alerts and their maximum profit potential." },
-    "/simulation": { title: "Alpha Simulator", desc: "Rewind to any date and see how the top-scoring stocks of that day performed." }
+    "/simulation": { title: "Alpha Simulator", desc: "Rewind to any date and see how the top-scoring stocks of that day performed." },
+    "/trades": { title: "Trade History", desc: "Complete audit log of all active and closed positions across all portfolios." }
   };
 
   const getPageMeta = (pathname) => {
@@ -111,6 +114,7 @@ function Layout({ children, socket, isConnected, url, setUrl }) {
     if (pathname.startsWith("/stocks")) return PAGE_META["/stocks"];
     if (pathname.startsWith("/alerts")) return PAGE_META["/alerts"];
     if (pathname.startsWith("/simulation")) return PAGE_META["/simulation"];
+    if (pathname.startsWith("/trades")) return PAGE_META["/trades"];
     return { title: "Dashboard", desc: "Antigravity AI Command Center" };
   };
 
@@ -241,6 +245,7 @@ function App() {
           <Route path="/stocks" element={<Stocks />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/simulation" element={<Simulation />} />
+          <Route path="/trades" element={<Trades />} />
           <Route path="/stocks/:symbol" element={<StockDetail />} />
         </Routes>
       </Layout>
