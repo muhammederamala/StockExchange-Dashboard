@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  ReferenceDot, LabelList, Scatter, ComposedChart, Line
+  ReferenceDot, ReferenceLine, LabelList, Scatter, ComposedChart, Line
 } from 'recharts';
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isSameDay } from 'date-fns';
 import { Calendar, Activity, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
@@ -30,15 +30,24 @@ export function StockPriceChart({ symbol }) {
       const result = await res.json();
       
       // Combine candles and events for the chart
-      // We want to map events to the closest candle date
       const chartData = (result.candles || []).map(candle => {
-        const dayEvents = (result.events || []).filter(e => e.date === candle.date);
+        const candleDate = parseISO(candle.date);
+        
+        // Find events that happen exactly within this 5m candle's window
+        const candleTime = candleDate.getTime();
+        const candleEnd = candleTime + (5 * 60 * 1000); // +5 mins
+        
+        const validEvents = (result.events || []).filter(e => {
+            const eTime = new Date(e.time).getTime();
+            return eTime >= candleTime && eTime < candleEnd;
+        });
+
         return {
           ...candle,
-          formattedDate: format(parseISO(candle.date), 'dd MMM'),
+          formattedDate: format(candleDate, 'dd MMM HH:mm'),
           price: candle.close,
-          buys: dayEvents.filter(e => e.type === 'BUY').map(e => e.price),
-          sells: dayEvents.filter(e => e.type === 'SELL').map(e => e.price),
+          buys: validEvents.filter(e => e.type === 'BUY').map(e => ({ price: e.price, shares: e.shares || 0 })),
+          sells: validEvents.filter(e => e.type === 'SELL').map(e => ({ price: e.price, shares: e.shares || 0 })),
         };
       });
       
@@ -60,7 +69,7 @@ export function StockPriceChart({ symbol }) {
       const item = payload[0].payload;
       return (
         <div className="bg-zinc-950/90 border border-zinc-800 p-3 rounded-xl shadow-2xl backdrop-blur-md">
-          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">{format(parseISO(item.date), 'EEEE, MMM dd')}</p>
+          <p className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest mb-1">{format(parseISO(item.date), 'EEEE, MMM dd HH:mm')}</p>
           <p className="text-sm font-bold text-zinc-100 mb-1">Price: ₹{item.price.toLocaleString()}</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 border-t border-zinc-800 pt-2">
             <span className="text-[10px] text-zinc-500 uppercase">Open</span>
@@ -73,13 +82,21 @@ export function StockPriceChart({ symbol }) {
             <span className="text-[10px] text-zinc-300 text-right">{(item.volume || 0).toLocaleString()}</span>
           </div>
           {item.buys.length > 0 && (
-            <div className="mt-2 text-emerald-400 text-[10px] font-bold border-t border-zinc-800 pt-2 flex items-center gap-1">
-              <TrendingUp size={10} /> BOUGHT AT ₹{item.buys.join(', ')}
+            <div className="mt-2 text-emerald-400 text-[10px] font-bold border-t border-zinc-800 pt-2 flex flex-col gap-1">
+              {item.buys.map((b, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <TrendingUp size={10} /> BOUGHT {b.shares} @ ₹{b.price}
+                </div>
+              ))}
             </div>
           )}
           {item.sells.length > 0 && (
-            <div className="mt-1 text-rose-400 text-[10px] font-bold flex items-center gap-1">
-              <TrendingDown size={10} /> SOLD AT ₹{item.sells.join(', ')}
+            <div className="mt-1 text-rose-400 text-[10px] font-bold flex flex-col gap-1">
+              {item.sells.map((s, i) => (
+                <div key={i} className="flex items-center gap-1">
+                  <TrendingDown size={10} /> SOLD {s.shares} @ ₹{s.price}
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -180,33 +197,49 @@ export function StockPriceChart({ symbol }) {
               
               {/* Buy Points */}
               {data.map((entry, index) => 
-                entry.buys.map((buyPrice, bIdx) => (
-                  <ReferenceDot
-                    key={`buy-${index}-${bIdx}`}
-                    x={entry.formattedDate}
-                    y={buyPrice}
-                    r={6}
-                    fill="#10b981"
-                    stroke="#064e3b"
-                    strokeWidth={2}
-                    isFront={true}
-                  />
+                entry.buys.map((buy, bIdx) => (
+                  <React.Fragment key={`buy-group-${index}-${bIdx}`}>
+                    <ReferenceLine
+                      x={entry.formattedDate}
+                      stroke="#10b981"
+                      strokeDasharray="3 3"
+                      strokeOpacity={0.6}
+                      strokeWidth={1}
+                    />
+                    <ReferenceDot
+                      x={entry.formattedDate}
+                      y={buy.price}
+                      r={6}
+                      fill="#10b981"
+                      stroke="#064e3b"
+                      strokeWidth={2}
+                      isFront={true}
+                    />
+                  </React.Fragment>
                 ))
               )}
 
               {/* Sell Points */}
               {data.map((entry, index) => 
-                entry.sells.map((sellPrice, sIdx) => (
-                  <ReferenceDot
-                    key={`sell-${index}-${sIdx}`}
-                    x={entry.formattedDate}
-                    y={sellPrice}
-                    r={6}
-                    fill="#f43f5e"
-                    stroke="#4c0519"
-                    strokeWidth={2}
-                    isFront={true}
-                  />
+                entry.sells.map((sell, sIdx) => (
+                  <React.Fragment key={`sell-group-${index}-${sIdx}`}>
+                    <ReferenceLine
+                      x={entry.formattedDate}
+                      stroke="#f43f5e"
+                      strokeDasharray="3 3"
+                      strokeOpacity={0.6}
+                      strokeWidth={1}
+                    />
+                    <ReferenceDot
+                      x={entry.formattedDate}
+                      y={sell.price}
+                      r={6}
+                      fill="#f43f5e"
+                      stroke="#4c0519"
+                      strokeWidth={2}
+                      isFront={true}
+                    />
+                  </React.Fragment>
                 ))
               )}
 

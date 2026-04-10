@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Activity, Calendar, TrendingUp, TrendingDown, Clock, CheckCircle2, ArrowUpRight, BarChart3, Volume2, Briefcase, Search, Filter } from "lucide-react";
+import { format, startOfWeek, addDays } from "date-fns";
 import { DataTable } from "../components/DataTable";
 
 export function Trades() {
@@ -10,9 +11,14 @@ export function Trades() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     
+    // Default to current week (Monday to Friday)
+    const today = new Date();
+    const monday = format(addDays(startOfWeek(today, { weekStartsOn: 1 }), 0), 'yyyy-MM-dd');
+    const friday = format(addDays(startOfWeek(today, { weekStartsOn: 1 }), 4), 'yyyy-MM-dd');
+
     // Date filters
-    const [fromDate, setFromDate] = useState("");
-    const [toDate, setToDate] = useState("");
+    const [fromDate, setFromDate] = useState(monday);
+    const [toDate, setToDate] = useState(friday);
 
     // Pagination state
     const [page, setPage] = useState(1);
