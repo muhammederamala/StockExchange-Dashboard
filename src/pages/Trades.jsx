@@ -24,6 +24,7 @@ export function Trades() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [summaryStats, setSummaryStats] = useState(null);
 
     const fetchTrades = async (p, q, status, from, to) => {
         setLoading(true);
@@ -41,6 +42,7 @@ export function Trades() {
             const res = await fetch(`${baseUrl}/api/trades?${params}`);
             const data = await res.json();
             setResults(data.data || []);
+            setSummaryStats(data.summaryStats || null);
             setTotalPages(data.pagination?.totalPages || 1);
             setTotal(data.pagination?.total || 0);
         } catch (err) {
@@ -265,6 +267,30 @@ export function Trades() {
                     {total} POSITIONS IN HISTORY
                 </div>
             </div>
+
+            {/* Summary Stats */}
+            {summaryStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 shrink-0">
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800 backdrop-blur-md flex flex-col">
+                        <span className="text-[10px] text-zinc-500 uppercase font-bold mb-1">Total Invested</span>
+                        <span className="text-lg font-bold text-zinc-200 font-mono">₹{(summaryStats.totalTradedAmount || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-emerald-500/20 backdrop-blur-md flex flex-col">
+                        <span className="text-[10px] text-emerald-500/70 uppercase font-bold mb-1">Profit</span>
+                        <span className="text-lg font-bold text-emerald-400 font-mono">+₹{(summaryStats.totalProfit || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-rose-500/20 backdrop-blur-md flex flex-col">
+                        <span className="text-[10px] text-rose-500/70 uppercase font-bold mb-1">Loss</span>
+                        <span className="text-lg font-bold text-rose-400 font-mono">-₹{(summaryStats.totalLoss || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className={`bg-zinc-900/50 p-4 rounded-xl border backdrop-blur-md flex flex-col ${summaryStats.netProfit >= 0 ? 'border-emerald-500/30' : 'border-rose-500/30'}`}>
+                        <span className={`text-[10px] uppercase font-bold mb-1 ${summaryStats.netProfit >= 0 ? 'text-emerald-500/70' : 'text-rose-500/70'}`}>Net Profit</span>
+                        <span className={`text-lg font-bold font-mono ${summaryStats.netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {summaryStats.netProfit >= 0 ? '+' : '-'}₹{Math.abs(summaryStats.netProfit || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        </span>
+                    </div>
+                </div>
+            )}
 
             {/* Main Table Body */}
             <div className="flex-1 min-h-0 flex flex-col">
