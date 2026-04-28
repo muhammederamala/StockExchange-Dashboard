@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Activity, Calendar, TrendingUp, TrendingDown, Clock, CheckCircle2, ArrowUpRight, BarChart3, Volume2, Briefcase, Search, Filter } from "lucide-react";
 import { format, startOfWeek, addDays } from "date-fns";
 import { DataTable } from "../components/DataTable";
+import { apiFetch } from "../lib/api";
 
 export function Trades() {
     const navigate = useNavigate();
@@ -29,7 +30,7 @@ export function Trades() {
     const fetchTrades = async (p, q, status, from, to) => {
         setLoading(true);
         try {
-            const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
             const params = new URLSearchParams({
                 page: p.toString(),
                 limit: "20",
@@ -39,7 +40,7 @@ export function Trades() {
             if (from) params.append("from", from);
             if (to) params.append("to", to);
 
-            const res = await fetch(`${baseUrl}/api/trades?${params}`);
+            const res = await apiFetch(`/api/trades?${params}`);
             const data = await res.json();
             setResults(data.data || []);
             setSummaryStats(data.summaryStats || null);

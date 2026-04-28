@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { TrendingUp, TrendingDown, SlidersHorizontal, ChevronDown, Activity } from "lucide-react";
 import { HighVolumeToggle } from "../components/HighVolumeToggle";
 import { DataTable } from "../components/DataTable";
+import { apiFetch } from "../lib/api";
 
 export function Stocks() {
     const [search, setSearch] = useState("");
@@ -30,7 +31,6 @@ export function Stocks() {
         const fetchStocks = async () => {
             setLoading(true);
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
                 const params = new URLSearchParams({
                     q: search,
                     page: page.toString(),
@@ -41,7 +41,7 @@ export function Stocks() {
                 if (minScore) params.set("minScore", minScore);
                 if (maxScore) params.set("maxScore", maxScore);
 
-                const res = await fetch(`${baseUrl}/api/stocks?${params}`);
+                const res = await apiFetch(`/api/stocks?${params}`);
                 const data = await res.json();
                 if (isMounted) {
                     setStocks(data.data || []);

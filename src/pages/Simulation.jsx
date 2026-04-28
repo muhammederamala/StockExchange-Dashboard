@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Activity, Calendar, TrendingUp, TrendingDown, Clock, CheckCircle2, ArrowUpRight, BarChart3, Volume2 } from "lucide-react";
 import { HighVolumeToggle } from "../components/HighVolumeToggle";
 import { DataTable } from "../components/DataTable";
+import { apiFetch } from "../lib/api";
 
 export function Simulation() {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ export function Simulation() {
     const fetchSimulation = async (date, highVolume, p, q) => {
         setLoading(true);
         try {
-            const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
             const params = new URLSearchParams({
                 date,
                 highVolume: highVolume.toString(),
@@ -30,7 +31,7 @@ export function Simulation() {
                 limit: "20",
                 q
             });
-            const res = await fetch(`${baseUrl}/api/performance/simulation?${params}`);
+            const res = await apiFetch(`/api/performance/simulation?${params}`);
             const data = await res.json();
             setResults(data.data || []);
             setTotalPages(data.pagination?.totalPages || 1);

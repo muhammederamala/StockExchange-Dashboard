@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
 import { DataTable } from "../components/DataTable";
+import { apiFetch } from "../lib/api";
 
 import { StockPriceChart } from "../components/StockPriceChart";
 
@@ -18,8 +19,7 @@ export function StockDetail() {
         let isMounted = true;
         const fetchStats = async () => {
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-                const res = await fetch(`${baseUrl}/api/stocks/${symbol}`);
+                const res = await apiFetch(`/api/stocks/${symbol}`);
                 const result = await res.json();
                 if (isMounted) setData(result);
             } catch (err) {

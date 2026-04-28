@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Clock, CheckCircle2, ArrowUpRight, BarChart3, Calendar } from "lucide-react";
 import { HighVolumeToggle } from "../components/HighVolumeToggle";
 import { DataTable } from "../components/DataTable";
+import { apiFetch } from "../lib/api";
 
 export function Alerts() {
     const [alerts, setAlerts] = useState([]);
@@ -42,7 +43,7 @@ export function Alerts() {
         const fetchAlerts = async () => {
             setLoading(true);
             try {
-                const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
                 const params = new URLSearchParams({
                     from: fromDate,
                     to: toDate,
@@ -52,7 +53,7 @@ export function Alerts() {
                     limit: "20"
                 });
 
-                const res = await fetch(`${baseUrl}/api/performance/top-alerts?${params}`);
+                const res = await apiFetch(`/api/performance/top-alerts?${params}`);
                 const data = await res.json();
                 if (isMounted) {
                     setAlerts(data.data || []);
