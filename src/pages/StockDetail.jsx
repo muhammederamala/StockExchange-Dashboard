@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
 import { DataTable } from "../components/DataTable";
-import { StockPriceChart } from "../components/StockPriceChart";
 import { apiFetch } from "../lib/api";
+
+import { StockPriceChart } from "../components/StockPriceChart";
 
 export function StockDetail() {
     const { symbol } = useParams();

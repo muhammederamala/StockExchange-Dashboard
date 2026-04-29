@@ -23,6 +23,7 @@ export function Simulation() {
     const fetchSimulation = async (date, highVolume, p, q) => {
         setLoading(true);
         try {
+
             const params = new URLSearchParams({
                 date,
                 highVolume: highVolume.toString(),

@@ -30,6 +30,7 @@ export function Trades() {
     const fetchTrades = async (p, q, status, from, to) => {
         setLoading(true);
         try {
+
             const params = new URLSearchParams({
                 page: p.toString(),
                 limit: "20",

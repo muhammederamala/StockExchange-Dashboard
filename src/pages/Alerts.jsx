@@ -43,6 +43,7 @@ export function Alerts() {
         const fetchAlerts = async () => {
             setLoading(true);
             try {
+
                 const params = new URLSearchParams({
                     from: fromDate,
                     to: toDate,
