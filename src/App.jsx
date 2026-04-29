@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
+import { clearAuth, getToken } from "./lib/api";
 import io from "socket.io-client";
 import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, X } from "lucide-react";
 
@@ -194,13 +195,12 @@ function App() {
   const [systemStatus, setSystemStatus] = useState(null);
 
   useEffect(() => {
-    // Check Auth on Mount
     const expiry = localStorage.getItem("authExpiry");
-    if (expiry && Date.now() < parseInt(expiry, 10)) {
+    const token = getToken();
+    if (token && expiry && Date.now() < parseInt(expiry, 10)) {
       setIsAuthenticated(true);
     } else {
-      // Clear if expired
-      localStorage.removeItem("authExpiry");
+      clearAuth();
     }
     setAuthChecked(true);
   }, []);

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceDot, ReferenceLine, LabelList, Scatter, ComposedChart, Line
 } from 'recharts';
 import { format, startOfWeek, endOfWeek, addDays, parseISO, isSameDay } from 'date-fns';
 import { Calendar, Activity, TrendingUp, TrendingDown, RefreshCw } from 'lucide-react';
+import { apiFetch } from '../lib/api';
 
 export function StockPriceChart({ symbol }) {
   // Default to current week (Monday to Friday)
@@ -21,12 +22,11 @@ export function StockPriceChart({ symbol }) {
   const fetchChartData = async () => {
     setLoading(true);
     try {
-      const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
       const params = new URLSearchParams({
         from: dateFrom,
         to: dateTo
       });
-      const res = await fetch(`${baseUrl}/api/stocks/${symbol}/chart?${params}`);
+      const res = await apiFetch(`/api/stocks/${symbol}/chart?${params}`);
       const result = await res.json();
       
       // Combine candles and events for the chart
