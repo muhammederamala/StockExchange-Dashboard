@@ -11,7 +11,8 @@ export function Trades() {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
-    
+    const [strategyFilter, setStrategyFilter] = useState("ALL");
+
     // Default to current week (Monday to Friday)
     const today = new Date();
     const monday = format(addDays(startOfWeek(today, { weekStartsOn: 1 }), 0), 'yyyy-MM-dd');
@@ -27,16 +28,16 @@ export function Trades() {
     const [total, setTotal] = useState(0);
     const [summaryStats, setSummaryStats] = useState(null);
 
-    const fetchTrades = async (p, q, status, from, to) => {
+    const fetchTrades = async (p, q, status, strategy, from, to) => {
         setLoading(true);
         try {
-
             const params = new URLSearchParams({
                 page: p.toString(),
                 limit: "20",
                 q,
             });
             if (status !== "ALL") params.append("status", status);
+            if (strategy !== "ALL") params.append("strategy", strategy);
             if (from) params.append("from", from);
             if (to) params.append("to", to);
 
@@ -55,15 +56,15 @@ export function Trades() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchTrades(page, search, statusFilter, fromDate, toDate);
+            fetchTrades(page, search, statusFilter, strategyFilter, fromDate, toDate);
         }, 300);
         return () => clearTimeout(timer);
-    }, [page, search, statusFilter, fromDate, toDate]);
+    }, [page, search, statusFilter, strategyFilter, fromDate, toDate]);
 
     // Reset page on filter change
     useEffect(() => {
         setPage(1);
-    }, [search, statusFilter, fromDate, toDate]);
+    }, [search, statusFilter, strategyFilter, fromDate, toDate]);
 
     const formatPrice = (price) => {
         if (!price) return "—";
@@ -223,14 +224,42 @@ export function Trades() {
         }
     ];
 
+    const strategyOptions = [
+        { value: "ALL", label: "All" },
+        { value: "swing", label: "Swing" },
+        { value: "intraday", label: "Intraday" },
+    ];
+
     return (
         <div className="flex flex-col h-full w-full overflow-hidden">
+            {/* Strategy Group Buttons */}
+            <div className="flex items-center gap-2 mb-4 shrink-0">
+                {strategyOptions.map(({ value, label }) => {
+                    const active = strategyFilter === value;
+                    const colorMap = {
+                        swing: active ? "bg-indigo-500 text-white border-indigo-500" : "text-zinc-400 border-zinc-700 hover:border-indigo-500/50 hover:text-indigo-300",
+                        intraday: active ? "bg-amber-500 text-white border-amber-500" : "text-zinc-400 border-zinc-700 hover:border-amber-500/50 hover:text-amber-300",
+                        ALL: active ? "bg-zinc-700 text-white border-zinc-600" : "text-zinc-400 border-zinc-700 hover:border-zinc-500 hover:text-zinc-300",
+                    };
+                    return (
+                        <button
+                            key={value}
+                            onClick={() => setStrategyFilter(value)}
+                            className={`px-4 py-1.5 rounded-lg border text-xs font-semibold tracking-wide transition-all ${colorMap[value]}`}
+                        >
+                            {label}
+                        </button>
+                    );
+                })}
+                <span className="text-zinc-700 text-xs font-mono ml-1 uppercase tracking-widest">Strategy</span>
+            </div>
+
             {/* Filter Bar */}
             <div className="flex flex-wrap items-center justify-between mb-6 shrink-0 gap-4">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 backdrop-blur-md px-3">
                         <Filter size={14} className="text-zinc-500" />
-                        <select 
+                        <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             className="bg-transparent border-none outline-none text-xs text-zinc-300 font-medium cursor-pointer py-1"
@@ -245,8 +274,8 @@ export function Trades() {
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 backdrop-blur-md px-3">
                             <span className="text-[10px] text-zinc-500 uppercase font-bold">From</span>
-                            <input 
-                                type="date" 
+                            <input
+                                type="date"
                                 value={fromDate}
                                 onChange={(e) => setFromDate(e.target.value)}
                                 className="bg-transparent border-none outline-none text-xs text-zinc-300 font-mono cursor-pointer"
@@ -254,8 +283,8 @@ export function Trades() {
                         </div>
                         <div className="flex items-center gap-2 bg-zinc-900/50 p-1.5 rounded-xl border border-zinc-800 backdrop-blur-md px-3">
                             <span className="text-[10px] text-zinc-500 uppercase font-bold">To</span>
-                            <input 
-                                type="date" 
+                            <input
+                                type="date"
                                 value={toDate}
                                 onChange={(e) => setToDate(e.target.value)}
                                 className="bg-transparent border-none outline-none text-xs text-zinc-300 font-mono cursor-pointer"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Zap, RefreshCw, IndianRupee, TrendingUp, TrendingDown, Clock, AlertTriangle, KeyRound, CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { Zap, RefreshCw, IndianRupee, TrendingUp, TrendingDown, Clock, AlertTriangle, KeyRound, CheckCircle2, Eye, EyeOff, ToggleLeft, ToggleRight } from "lucide-react";
 import { apiFetch } from "../lib/api";
 
 function StatusBadge({ connected }) {
@@ -91,6 +91,13 @@ export function AngelOne() {
     const [maxOrderInput, setMaxOrderInput] = useState("");
     const [savingBudget, setSavingBudget] = useState(false);
 
+    // Per-strategy settings
+    const [strategies, setStrategies] = useState({
+        swing:    { enabled: true, budget: 0 },
+        intraday: { enabled: true, budget: 0 },
+    });
+    const [savingStrategies, setSavingStrategies] = useState(false);
+
     const [activeTab, setActiveTab] = useState("orders");
     const [loadingData, setLoadingData] = useState(false);
 
@@ -101,6 +108,12 @@ export function AngelOne() {
             setStatus(data);
             setBudgetInput(String(data.budget || 0));
             setMaxOrderInput(String(data.maxOrderSize || 0));
+            if (data.strategies) {
+                setStrategies({
+                    swing:    { enabled: data.strategies.swing?.enabled ?? true,    budget: data.strategies.swing?.budget ?? 0 },
+                    intraday: { enabled: data.strategies.intraday?.enabled ?? true, budget: data.strategies.intraday?.budget ?? 0 },
+                });
+            }
         } catch {
             setStatus({ hasCredentials: false, connected: false });
         }
@@ -183,6 +196,26 @@ export function AngelOne() {
             await fetchStatus();
         } catch {} finally { setSavingBudget(false); }
     };
+
+    const handleSaveStrategies = async () => {
+        setSavingStrategies(true);
+        try {
+            await apiFetch("/api/angelone/strategies", {
+                method: "PUT",
+                body: JSON.stringify({
+                    swing:    { enabled: strategies.swing.enabled,    budget: parseFloat(strategies.swing.budget) || 0 },
+                    intraday: { enabled: strategies.intraday.enabled, budget: parseFloat(strategies.intraday.budget) || 0 },
+                }),
+            });
+            await fetchStatus();
+        } catch {} finally { setSavingStrategies(false); }
+    };
+
+    const toggleStrategy = (name) =>
+        setStrategies(s => ({ ...s, [name]: { ...s[name], enabled: !s[name].enabled } }));
+
+    const setStrategyBudget = (name, val) =>
+        setStrategies(s => ({ ...s, [name]: { ...s[name], budget: val } }));
 
     return (
         <div className="flex flex-col gap-6">
@@ -331,6 +364,68 @@ export function AngelOne() {
                     className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
                 >
                     {savingBudget ? "Saving..." : "Save Budget"}
+                </button>
+            </Card>
+
+            {/* ── Strategy Settings Card ───────────────────────── */}
+            <Card>
+                <SectionTitle icon={Zap} title="Strategy Settings" />
+                <p className="text-xs text-zinc-500 mb-5">
+                    Enable or disable a strategy and set its dedicated capital. Disabled strategies will not place any orders.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                    {[
+                        { key: "swing",    label: "Swing",    color: "indigo" },
+                        { key: "intraday", label: "Intraday", color: "amber"  },
+                    ].map(({ key, label, color }) => {
+                        const cfg = strategies[key];
+                        const accent = color === "indigo"
+                            ? { ring: "ring-indigo-500/40", dot: "bg-indigo-400", text: "text-indigo-400", border: "border-indigo-500/30" }
+                            : { ring: "ring-amber-500/40",  dot: "bg-amber-400",  text: "text-amber-400",  border: "border-amber-500/30"  };
+                        return (
+                            <div
+                                key={key}
+                                className={`rounded-xl border p-4 transition-all ${cfg.enabled ? `${accent.border} bg-zinc-800/40` : "border-zinc-800 bg-zinc-900/30 opacity-60"}`}
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${cfg.enabled ? accent.dot : "bg-zinc-600"}`} />
+                                        <span className={`text-sm font-bold ${cfg.enabled ? accent.text : "text-zinc-500"}`}>{label}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleStrategy(key)}
+                                        className="flex items-center gap-1.5 text-xs font-semibold transition-colors"
+                                        title={cfg.enabled ? "Disable strategy" : "Enable strategy"}
+                                    >
+                                        {cfg.enabled
+                                            ? <ToggleRight size={22} className={accent.text} />
+                                            : <ToggleLeft size={22} className="text-zinc-600" />
+                                        }
+                                        <span className={cfg.enabled ? accent.text : "text-zinc-600"}>
+                                            {cfg.enabled ? "Enabled" : "Disabled"}
+                                        </span>
+                                    </button>
+                                </div>
+                                <div>
+                                    <label className="text-[10px] text-zinc-500 font-mono uppercase tracking-widest block mb-1.5">Budget (₹)</label>
+                                    <input
+                                        type="number"
+                                        value={cfg.budget}
+                                        onChange={e => setStrategyBudget(key, e.target.value)}
+                                        placeholder="e.g. 25000"
+                                        className="w-full bg-black/50 border border-zinc-700/50 text-zinc-200 text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder:text-zinc-600"
+                                    />
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                <button
+                    onClick={handleSaveStrategies}
+                    disabled={savingStrategies}
+                    className="px-5 py-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 text-white text-sm font-semibold rounded-lg transition-colors"
+                >
+                    {savingStrategies ? "Saving..." : "Save Strategy Settings"}
                 </button>
             </Card>
 
