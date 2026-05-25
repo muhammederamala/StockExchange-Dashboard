@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import io from "socket.io-client";
-import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, Zap } from "lucide-react";
+import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, Zap, Rocket } from "lucide-react";
 
 import { Home } from "./pages/Home";
 import { Stocks } from "./pages/Stocks";
+import { Movers } from "./pages/Movers";
 import { Alerts } from "./pages/Alerts";
 import { Simulation } from "./pages/Simulation";
 import { Trades } from "./pages/Trades";
@@ -22,6 +23,7 @@ function NavLinks({ closeSidebar }) {
   const links = [
     { to: "/", label: "Live Feed", icon: Activity },
     { to: "/stocks", label: "Database", icon: Database },
+    { to: "/movers", label: "Movers", icon: Rocket },
     { to: "/alerts", label: "Performance", icon: TrendingUp },
     { to: "/simulation", label: "Simulation", icon: FastForward },
     { to: "/trades", label: "Trades", icon: Briefcase },
@@ -109,6 +111,7 @@ function Layout({ children, socket, isConnected, url, setUrl, onLogout }) {
   const PAGE_META = {
     "/": { title: "Live Telemetry", desc: "Real-time AI analysis and market signals." },
     "/stocks": { title: "Stock Database", desc: "Comprehensive market tracking spanning all active exchanges." },
+    "/movers": { title: "Continuation Candidates", desc: "Today's missed movers, scored for next-day continuation. Shadow mode — not auto-traded." },
     "/alerts": { title: "Alpha Performance Hub", desc: "Tracking the best historical alerts and their maximum profit potential." },
     "/simulation": { title: "Alpha Simulator", desc: "Rewind to any date and see how the top-scoring stocks of that day performed." },
     "/trades": { title: "Trade History", desc: "Complete audit log of all active and closed positions across all portfolios." },
@@ -122,6 +125,7 @@ function Layout({ children, socket, isConnected, url, setUrl, onLogout }) {
       return { title: `Stock Analysis: ${symbol}`, desc: "Deep-dive quantitative and sentiment data vectors." };
     }
     if (pathname.startsWith("/stocks")) return PAGE_META["/stocks"];
+    if (pathname.startsWith("/movers")) return PAGE_META["/movers"];
     if (pathname.startsWith("/alerts")) return PAGE_META["/alerts"];
     if (pathname.startsWith("/simulation")) return PAGE_META["/simulation"];
     if (pathname.startsWith("/trades")) return PAGE_META["/trades"];
@@ -241,6 +245,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home socket={socket} isConnected={isConnected} status={systemStatus} />} />
           <Route path="/stocks" element={<Stocks />} />
+          <Route path="/movers" element={<Movers />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/simulation" element={<Simulation />} />
           <Route path="/trades" element={<Trades />} />
