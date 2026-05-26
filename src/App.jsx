@@ -86,7 +86,7 @@ function Sidebar({ isOpen, setIsOpen, onLogout }) {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-medium text-zinc-200">Terminal Admin</span>
-                  <span className="text-[10px] text-zinc-500">v1.6.0-prod</span>
+                  <span className="text-[10px] text-zinc-500">v2.3.0-prod</span>
                 </div>
               </div>
               <button
@@ -179,7 +179,7 @@ function Layout({ children, socket, isConnected, url, setUrl, onLogout }) {
                 <span className={`text-[10px] font-bold font-mono tracking-tighter ${isConnected ? "text-emerald-400" : "text-red-400"} flex items-center gap-1.5`}>
                   {isConnected ? "STABLE" : "DROPPED"}
                   <span className="text-zinc-600 opacity-50 font-black">·</span>
-                  <span className="text-zinc-500 font-black">V1.6.0</span>
+                  <span className="text-zinc-500 font-black">V2.3.0</span>
                 </span>
               </div>
             </div>
