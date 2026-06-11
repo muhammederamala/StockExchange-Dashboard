@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, FileText, Newspaper, FileDown, Activity, ChevronDown, ChevronRight, BarChart3, Volume2, ArrowUpRight, ArrowDownRight, Calendar, Clock, CheckCircle2, ShieldAlert, Search } from "lucide-react";
 import { DataTable } from "../components/DataTable";
 import { apiFetch } from "../lib/api";
 
@@ -244,6 +244,134 @@ export function StockDetail() {
                             </div>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Continuation Signals Section (Mover Context) */}
+            {data.moverCandidate && (
+                <div className="bg-zinc-900/40 p-5 rounded-2xl border border-zinc-800/50 backdrop-blur-md shrink-0">
+                    <h3 className="text-sm font-semibold text-zinc-400 mb-4 border-b border-zinc-800/80 pb-3 flex items-center gap-2">
+                        <Activity size={16} className="text-amber-400" />
+                        CONTINUATION SIGNALS
+                        {data.moverCandidate.continuationScore != null && (
+                            <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded border ${
+                                data.moverCandidate.continuationScore >= 8 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                                data.moverCandidate.continuationScore >= 6 ? 'text-amber-400 bg-amber-500/10 border-amber-500/20' :
+                                data.moverCandidate.continuationScore >= 4 ? 'text-zinc-300 bg-zinc-800 border-zinc-700' :
+                                'text-zinc-500 bg-zinc-800 border-zinc-700'
+                            }`}>
+                                Score: {data.moverCandidate.continuationScore.toFixed(1)}/10
+                            </span>
+                        )}
+                    </h3>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Left: Mover Info + Search Summary */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-6 text-xs">
+                                <div>
+                                    <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Mover Date</span>
+                                    <p className="text-zinc-200 font-mono mt-0.5">{data.moverCandidate.date}</p>
+                                </div>
+                                <div>
+                                    <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Day Change</span>
+                                    <p className={`font-mono mt-0.5 flex items-center gap-1 ${data.moverCandidate.dayChangePct >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        {data.moverCandidate.dayChangePct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                                        {data.moverCandidate.dayChangePct >= 0 ? '+' : ''}{data.moverCandidate.dayChangePct?.toFixed(2)}%
+                                    </p>
+                                </div>
+                                {data.moverCandidate.dayClose != null && (
+                                    <div>
+                                        <span className="text-zinc-500 uppercase tracking-widest text-[10px] font-bold">Close</span>
+                                        <p className="text-zinc-200 font-mono mt-0.5">₹{data.moverCandidate.dayClose?.toFixed(2)}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {data.moverCandidate.search?.summary && (
+                                <div className="bg-black/30 p-4 rounded-xl border border-zinc-800/50">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Search size={12} className="text-zinc-500" />
+                                        <span className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold flex items-center gap-1.5">
+                                            <span className={`px-1 py-0.5 rounded text-[9px] ${data.moverCandidate.search.backend === 'gemini' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                {data.moverCandidate.search.backend === 'gemini' ? 'Gemini' : 'RSS+Groq'}
+                                            </span>
+                                            {data.moverCandidate.search.catalystInferred && (
+                                                <span className="px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[9px]">Catalyst</span>
+                                            )}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-400 leading-relaxed">{data.moverCandidate.search.summary}</p>
+                                    {data.moverCandidate.search.sources?.length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5">
+                                            {data.moverCandidate.search.sources.slice(0, 3).map((src, i) => (
+                                                <a key={i} href={src} target="_blank" rel="noreferrer" className="text-[9px] text-indigo-400/70 hover:text-indigo-300 underline decoration-indigo-500/30 truncate max-w-[180px]">
+                                                    {src}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right: Signals & Filings */}
+                        <div className="space-y-4">
+                            {data.moverCandidate.features?.signalIds?.length > 0 && (
+                                <div>
+                                    <h4 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2 flex items-center gap-1.5">
+                                        <Newspaper size={11} className="text-blue-400" />
+                                        News Signals ({data.moverCandidate.features.signalIds.length})
+                                    </h4>
+                                    <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                        {data.moverCandidate.features.signalIds.map((s, i) => (
+                                            <div key={i} className="bg-black/30 p-2.5 rounded-lg border border-zinc-800/50">
+                                                <a href={s.url} target="_blank" rel="noreferrer" className="text-xs text-zinc-300 hover:text-indigo-400 transition-colors underline decoration-zinc-700 decoration-1 underline-offset-2">
+                                                    &ldquo;{s.headline}&rdquo;
+                                                </a>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className="text-[9px] text-zinc-600">{s.source}</span>
+                                                    <span className="text-[9px] text-zinc-700">{new Date(s.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                                    <span className={`text-[9px] px-1 py-0.5 rounded uppercase font-bold ${s.type === 'NEWS_ARTICLE' ? 'text-blue-400 bg-blue-500/10' : 'text-amber-400 bg-amber-500/10'}`}>
+                                                        {s.type === 'NEWS_ARTICLE' ? 'News' : s.type}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {data.moverCandidate.features?.filingIds?.length > 0 && (
+                                <div>
+                                    <h4 className="text-[10px] uppercase tracking-widest text-zinc-500 font-bold mb-2 flex items-center gap-1.5">
+                                        <FileText size={11} className="text-emerald-400" />
+                                        Filings ({data.moverCandidate.features.filingIds.length})
+                                    </h4>
+                                    <div className="space-y-2 max-h-[180px] overflow-y-auto custom-scrollbar pr-1">
+                                        {data.moverCandidate.features.filingIds.map((f, i) => (
+                                            <div key={i} className="bg-black/30 p-2.5 rounded-lg border border-zinc-800/50">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[9px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-400 uppercase font-mono">{f.category}</span>
+                                                    <span className="text-[9px] text-zinc-600">{new Date(f.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                                </div>
+                                                <p className="text-xs text-zinc-300">{f.subject || f.headline}</p>
+                                                {f.attachmentUrl && (
+                                                    <a href={f.attachmentUrl} target="_blank" rel="noreferrer" className="text-[9px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mt-1">
+                                                        <FileDown size={9} /> Download PDF
+                                                    </a>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {(!data.moverCandidate.features?.signalIds?.length && !data.moverCandidate.features?.filingIds?.length) && (
+                                <p className="text-xs text-zinc-600 italic">No linked filings or news signals for this mover event.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
