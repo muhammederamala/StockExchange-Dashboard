@@ -12,6 +12,7 @@ export function Trades() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [strategyFilter, setStrategyFilter] = useState("ALL");
+    const [familyFilter, setFamilyFilter] = useState("ALL"); // catalyst family: ALL | FILING | DELIVERY_SPIKE
 
     // Default to current week (Monday to Friday)
     const today = new Date();
@@ -28,7 +29,7 @@ export function Trades() {
     const [total, setTotal] = useState(0);
     const [summaryStats, setSummaryStats] = useState(null);
 
-    const fetchTrades = async (p, q, status, strategy, from, to) => {
+    const fetchTrades = async (p, q, status, strategy, family, from, to) => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
@@ -38,6 +39,7 @@ export function Trades() {
             });
             if (status !== "ALL") params.append("status", status);
             if (strategy !== "ALL") params.append("strategy", strategy);
+            if (family !== "ALL") params.append("family", family);
             if (from) params.append("from", from);
             if (to) params.append("to", to);
 
@@ -56,15 +58,15 @@ export function Trades() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchTrades(page, search, statusFilter, strategyFilter, fromDate, toDate);
+            fetchTrades(page, search, statusFilter, strategyFilter, familyFilter, fromDate, toDate);
         }, 300);
         return () => clearTimeout(timer);
-    }, [page, search, statusFilter, strategyFilter, fromDate, toDate]);
+    }, [page, search, statusFilter, strategyFilter, familyFilter, fromDate, toDate]);
 
     // Reset page on filter change
     useEffect(() => {
         setPage(1);
-    }, [search, statusFilter, strategyFilter, fromDate, toDate]);
+    }, [search, statusFilter, strategyFilter, familyFilter, fromDate, toDate]);
 
     const formatPrice = (price) => {
         if (!price) return "—";
@@ -268,6 +270,21 @@ export function Trades() {
                             <option value="ACTIVE">Active Only</option>
                             <option value="CLOSED">Closed Only</option>
                             <option value="PENDING_SETUP">Pending Setup</option>
+                        </select>
+                    </div>
+
+                    {/* Catalyst family filter — separates the classic filing-score
+                        system's trades from the delivery-% family (paper validation) */}
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 backdrop-blur-md px-3">
+                        <Filter size={14} className="text-zinc-500" />
+                        <select
+                            value={familyFilter}
+                            onChange={(e) => setFamilyFilter(e.target.value)}
+                            className="bg-transparent border-none outline-none text-xs text-zinc-300 font-medium cursor-pointer py-1"
+                        >
+                            <option value="ALL">All Families</option>
+                            <option value="FILING">System (Filing)</option>
+                            <option value="DELIVERY_SPIKE">Delivery Family</option>
                         </select>
                     </div>
 
