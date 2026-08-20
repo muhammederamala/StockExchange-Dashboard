@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import io from "socket.io-client";
-import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, Zap, Rocket } from "lucide-react";
+import { Cpu, Database, Activity, TrendingUp, FastForward, Briefcase, Menu, Zap, Rocket, Ghost, Newspaper } from "lucide-react";
 
 import { Home } from "./pages/Home";
 import { Stocks } from "./pages/Stocks";
 import { Movers } from "./pages/Movers";
+import Digest from "./pages/Digest";
 import { Alerts } from "./pages/Alerts";
 import { Simulation } from "./pages/Simulation";
+import { ShadowTrades } from "./pages/ShadowTrades";
 import { Trades } from "./pages/Trades";
 import { StockDetail } from "./pages/StockDetail";
 import { Login } from "./pages/Login";
@@ -22,10 +24,12 @@ function NavLinks({ closeSidebar }) {
   const location = useLocation();
   const links = [
     { to: "/", label: "Live Feed", icon: Activity },
+    { to: "/digest", label: "Digest", icon: Newspaper },
     { to: "/stocks", label: "Database", icon: Database },
     { to: "/movers", label: "Movers", icon: Rocket },
     { to: "/alerts", label: "Performance", icon: TrendingUp },
     { to: "/simulation", label: "Simulation", icon: FastForward },
+    { to: "/shadow-trades", label: "Shadow Trades", icon: Ghost },
     { to: "/trades", label: "Trades", icon: Briefcase },
     { to: "/angel-one", label: "Angel One", icon: Zap },
   ];
@@ -110,10 +114,12 @@ function Layout({ children, socket, isConnected, url, setUrl, onLogout }) {
 
   const PAGE_META = {
     "/": { title: "Live Telemetry", desc: "Real-time AI analysis and market signals." },
+    "/digest": { title: "Market Digest", desc: "Current regime, trending topics and market-moving news — the five-minute read." },
     "/stocks": { title: "Stock Database", desc: "Comprehensive market tracking spanning all active exchanges." },
     "/movers": { title: "Continuation Candidates", desc: "Today's missed movers, scored for next-day continuation. Shadow mode — not auto-traded." },
     "/alerts": { title: "Alpha Performance Hub", desc: "Tracking the best historical alerts and their maximum profit potential." },
     "/simulation": { title: "Alpha Simulator", desc: "Rewind to any date and see how the top-scoring stocks of that day performed." },
+    "/shadow-trades": { title: "Shadow Trades", desc: "Capacity-unconstrained mirror of entry signals — no slot, cash, or daily-entry caps. Data collection only, never a real order." },
     "/trades": { title: "Trade History", desc: "Complete audit log of all active and closed positions across all portfolios." },
     "/angel-one": { title: "Angel One", desc: "Live brokerage connection — orders, positions, and budget management." },
   };
@@ -128,6 +134,7 @@ function Layout({ children, socket, isConnected, url, setUrl, onLogout }) {
     if (pathname.startsWith("/movers")) return PAGE_META["/movers"];
     if (pathname.startsWith("/alerts")) return PAGE_META["/alerts"];
     if (pathname.startsWith("/simulation")) return PAGE_META["/simulation"];
+    if (pathname.startsWith("/shadow-trades")) return PAGE_META["/shadow-trades"];
     if (pathname.startsWith("/trades")) return PAGE_META["/trades"];
     if (pathname.startsWith("/angel-one")) return PAGE_META["/angel-one"];
     return { title: "Dashboard", desc: "Antigravity AI Command Center" };
@@ -244,10 +251,12 @@ function App() {
       <Layout socket={socket} isConnected={isConnected} url={url} setUrl={setUrl} onLogout={handleLogout}>
         <Routes>
           <Route path="/" element={<Home socket={socket} isConnected={isConnected} status={systemStatus} />} />
+          <Route path="/digest" element={<Digest />} />
           <Route path="/stocks" element={<Stocks />} />
           <Route path="/movers" element={<Movers />} />
           <Route path="/alerts" element={<Alerts />} />
           <Route path="/simulation" element={<Simulation />} />
+          <Route path="/shadow-trades" element={<ShadowTrades />} />
           <Route path="/trades" element={<Trades />} />
           <Route path="/stocks/:symbol" element={<StockDetail />} />
           <Route path="/angel-one" element={<AngelOne />} />
