@@ -8,6 +8,27 @@ import { apiFetch } from "../lib/api";
 // Capacity-unconstrained mirror of Trades.jsx — reads /api/shadow-trades
 // instead of /api/trades. See StockExchange-AI src/shared/configs/shadowTrades.js
 // for which strategies feed this collection.
+
+// Shadow BOOK = which challenger config opened the row (configId in shadowTrades.js
+// BOOKS.DEFINITIONS). The API supplies the list; this only maps ids to display labels.
+const BOOK_LABELS = {
+    champion: "Champion",
+    pb2: "PB2 · 2% dip",
+    chase_chop: "Chase · CHOP",
+    pullback: "Pullback",
+    vcp: "VCP",
+    hard_gate: "Hard Gate",
+    mean_reversion: "Mean Reversion",
+    score: "Score",
+    live_mirror: "Live Mirror",
+};
+const BOOK_STYLES = {
+    champion: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    live_mirror: "bg-zinc-800 text-zinc-300 border-zinc-700",
+};
+const DEFAULT_BOOK_STYLE = "bg-violet-500/10 text-violet-300 border-violet-500/20";
+const bookLabel = (id) => BOOK_LABELS[id] || id;
+
 export function ShadowTrades() {
     const navigate = useNavigate();
     const [results, setResults] = useState([]);
@@ -16,6 +37,8 @@ export function ShadowTrades() {
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [strategyFilter, setStrategyFilter] = useState("ALL");
     const [familyFilter, setFamilyFilter] = useState("ALL");
+    const [bookFilter, setBookFilter] = useState("ALL");
+    const [books, setBooks] = useState([]);
 
     const today = new Date();
     const monday = format(addDays(startOfWeek(today, { weekStartsOn: 1 }), 0), 'yyyy-MM-dd');
@@ -29,7 +52,7 @@ export function ShadowTrades() {
     const [total, setTotal] = useState(0);
     const [summaryStats, setSummaryStats] = useState(null);
 
-    const fetchTrades = async (p, q, status, strategy, family, from, to) => {
+    const fetchTrades = async (p, q, status, strategy, family, book, from, to) => {
         setLoading(true);
         try {
             const params = new URLSearchParams({
@@ -40,6 +63,7 @@ export function ShadowTrades() {
             if (status !== "ALL") params.append("status", status);
             if (strategy !== "ALL") params.append("strategy", strategy);
             if (family !== "ALL") params.append("family", family);
+            if (book !== "ALL") params.append("book", book);
             if (from) params.append("from", from);
             if (to) params.append("to", to);
 
@@ -47,6 +71,7 @@ export function ShadowTrades() {
             const data = await res.json();
             setResults(data.data || []);
             setSummaryStats(data.summaryStats || null);
+            setBooks(data.books || []);
             setTotalPages(data.pagination?.totalPages || 1);
             setTotal(data.pagination?.total || 0);
         } catch (err) {
@@ -58,14 +83,14 @@ export function ShadowTrades() {
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchTrades(page, search, statusFilter, strategyFilter, familyFilter, fromDate, toDate);
+            fetchTrades(page, search, statusFilter, strategyFilter, familyFilter, bookFilter, fromDate, toDate);
         }, 300);
         return () => clearTimeout(timer);
-    }, [page, search, statusFilter, strategyFilter, familyFilter, fromDate, toDate]);
+    }, [page, search, statusFilter, strategyFilter, familyFilter, bookFilter, fromDate, toDate]);
 
     useEffect(() => {
         setPage(1);
-    }, [search, statusFilter, strategyFilter, familyFilter, fromDate, toDate]);
+    }, [search, statusFilter, strategyFilter, familyFilter, bookFilter, fromDate, toDate]);
 
     const formatPrice = (price) => {
         if (!price) return "—";
@@ -107,6 +132,28 @@ export function ShadowTrades() {
                             {item.companyName}
                         </span>
                     </div>
+                </div>
+            )
+        },
+        {
+            header: "Book & Strategy",
+            render: (item) => (
+                <div className="flex flex-col gap-1 items-start">
+                    <span
+                        title={books.find(b => b.configId === item.book)?.question || ""}
+                        className={`text-[10px] px-2 py-0.5 rounded border font-semibold uppercase tracking-wider ${BOOK_STYLES[item.book] || DEFAULT_BOOK_STYLE}`}
+                    >
+                        {bookLabel(item.book)}
+                    </span>
+                    <span className="text-xs text-zinc-300 font-mono">
+                        {item.archetype?.replace(/_/g, ' ') || "—"}
+                        {item.regime && <span className="text-zinc-500"> · {item.regime}</span>}
+                    </span>
+                    {item.fillReason && (
+                        <span className="text-[10px] text-zinc-600 font-mono">
+                            {item.fillReason.replace(/_/g, ' ')}
+                        </span>
+                    )}
                 </div>
             )
         },
@@ -285,6 +332,22 @@ export function ShadowTrades() {
                             <option value="ALL">All Families</option>
                             <option value="FILING">System (Filing)</option>
                             <option value="DELIVERY_SPIKE">Delivery Family</option>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 bg-zinc-900/50 p-1 rounded-xl border border-zinc-800 backdrop-blur-md px-3">
+                        <Ghost size={14} className="text-zinc-500" />
+                        <select
+                            value={bookFilter}
+                            onChange={(e) => setBookFilter(e.target.value)}
+                            className="bg-transparent border-none outline-none text-xs text-zinc-300 font-medium cursor-pointer py-1"
+                        >
+                            <option value="ALL">All Books</option>
+                            {books.map(b => (
+                                <option key={b.configId} value={b.configId}>
+                                    {bookLabel(b.configId)} ({b.count})
+                                </option>
+                            ))}
                         </select>
                     </div>
 
